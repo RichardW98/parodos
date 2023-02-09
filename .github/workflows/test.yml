@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - EloyGH
       - 'releases/**'
   pull_request:
     branches: [main]
@@ -27,6 +28,15 @@ jobs:
         with:
           generate-branches-badge: true
           jacoco-csv-file: ./workflow-engine/target/site/jacoco/jacoco.csv
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 40
+          min-coverage-changed-files: 60
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.3
+        with:
+          paths: ./workflow-engine/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 40
           min-coverage-changed-files: 60
