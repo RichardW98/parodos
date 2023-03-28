@@ -1,5 +1,6 @@
 package com.redhat.parodos.examples.utils;
 
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -32,6 +33,13 @@ public final class RestUtils {
 	 */
 	public static ResponseEntity<String> executePost(String urlString, String payload) {
 		RestTemplate restTemplate = new RestTemplate();
+		return restTemplate.postForEntity(urlString, payload, String.class);
+	}
+
+	public static ResponseEntity<String> executePost(String urlString, String payload, String username, String password) {
+		RestTemplate restTemplate = new RestTemplateBuilder()
+				.basicAuthentication(username, password)
+				.build();
 		return restTemplate.postForEntity(urlString, payload, String.class);
 	}
 

@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.parodos.workflow.examples;
+package com.redhat.parodos.examples.longrunningchecker;
 
-import com.redhat.parodos.examples.master.checker.NamespaceApprovalWorkFlowCheckerTask;
-import com.redhat.parodos.examples.master.task.NamespaceWorkFlowTask;
+import com.redhat.parodos.examples.longrunningchecker.task.LongRunningWorkFlowTask;
+import com.redhat.parodos.examples.longrunningchecker.task.LongRunningWorkFlowCheckerTask;
 import com.redhat.parodos.workflow.annotation.Checker;
 import com.redhat.parodos.workflow.annotation.Infrastructure;
 import com.redhat.parodos.workflow.consts.WorkFlowConstants;
 import com.redhat.parodos.workflows.workflow.SequentialFlow;
 import com.redhat.parodos.workflows.workflow.WorkFlow;
-import org.parodos.workflow.examples.task.CustomWorkFlowTask;
-import org.parodos.workflow.examples.task.SimpleWorkFlowCheckerTask;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,47 +35,48 @@ import java.util.List;
  */
 
 @Configuration
-public class CustomWorkFlowConfiguration {
+public class LongRunningWorkFlowConfiguration {
 
 	// START Custom Sequential Example (WorkflowTasks and Workflow Definitions)
+
 	@Bean
-	CustomWorkFlowTask customWorkFlowTaskOne(@Qualifier("simpleWorkFlowChecker") WorkFlow simpleWorkFlowChecker) {
-		CustomWorkFlowTask customWorkFlowTaskOne = new CustomWorkFlowTask();
-		customWorkFlowTaskOne.setWorkFlowCheckers(List.of(simpleWorkFlowChecker));
-		return customWorkFlowTaskOne;
+	LongRunningWorkFlowTask longRunningWorkFlowTaskOne(@Qualifier("longRunningWorkFlowChecker") WorkFlow longRunningWorkFlowChecker) {
+		LongRunningWorkFlowTask longRunningWorkFlowTaskOne = new LongRunningWorkFlowTask();
+		longRunningWorkFlowTaskOne.setWorkFlowCheckers(List.of(longRunningWorkFlowChecker));
+		return longRunningWorkFlowTaskOne;
 	}
 
 	@Bean
-	CustomWorkFlowTask customWorkFlowTaskTwo() {
-		return new CustomWorkFlowTask();
+	LongRunningWorkFlowTask longRunningWorkFlowTaskTwo() {
+		return new LongRunningWorkFlowTask();
 	}
 
-	@Bean(name = "customWorkflow" + WorkFlowConstants.INFRASTRUCTURE_WORKFLOW)
+	@Bean(name = "longRunningWorkFlow" + WorkFlowConstants.INFRASTRUCTURE_WORKFLOW)
 	@Infrastructure
-	WorkFlow customWorkflow(@Qualifier("customWorkFlowTaskOne") CustomWorkFlowTask customWorkFlowTaskOne,
-			@Qualifier("customWorkFlowTaskTwo") CustomWorkFlowTask customWorkFlowTaskTwo) {
+	WorkFlow longRunningWorkFlow(@Qualifier("longRunningWorkFlowTaskOne") LongRunningWorkFlowTask longRunningWorkFlowTaskOne,
+			@Qualifier("longRunningWorkFlowTaskTwo") LongRunningWorkFlowTask longRunningWorkFlowTaskTwo) {
 		// @formatter:off
         return SequentialFlow
                 .Builder.aNewSequentialFlow()
-                .named("customWorkflow" + WorkFlowConstants.INFRASTRUCTURE_WORKFLOW)
-                .execute(customWorkFlowTaskOne)
-				.then(customWorkFlowTaskTwo)
+                .named("longRunningWorkFlow" + WorkFlowConstants.INFRASTRUCTURE_WORKFLOW)
+                .execute(longRunningWorkFlowTaskOne)
+				.then(longRunningWorkFlowTaskTwo)
                 .build();
         // @formatter:on
 	}
 	// END Custom Sequential Example (WorkflowTasks and Workflow Definitions)
 
 	@Bean
-	SimpleWorkFlowCheckerTask simpleCustomCheckerTask() {
-		return new SimpleWorkFlowCheckerTask();
+	LongRunningWorkFlowCheckerTask longRunningWorkFlowCheckerTask() {
+		return new LongRunningWorkFlowCheckerTask();
 	}
 
-	@Bean(name = "simpleWorkFlowChecker")
+	@Bean(name = "longRunningWorkFlowChecker")
 	@Checker(cronExpression = "*/5 * * * * ?")
-	WorkFlow simpleWorkFlowChecker(
-			@Qualifier("simpleCustomCheckerTask") SimpleWorkFlowCheckerTask simpleCustomCheckerTask) {
-		return SequentialFlow.Builder.aNewSequentialFlow().named("simpleWorkFlowChecker")
-				.execute(simpleCustomCheckerTask).build();
+	WorkFlow longRunningWorkFlowChecker(
+			@Qualifier("longRunningWorkFlowCheckerTask") LongRunningWorkFlowCheckerTask longRunningWorkFlowCheckerTask) {
+		return SequentialFlow.Builder.aNewSequentialFlow().named("longRunningWorkFlowChecker")
+				.execute(longRunningWorkFlowCheckerTask).build();
 	}
 
 }
