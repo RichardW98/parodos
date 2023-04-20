@@ -84,7 +84,7 @@ public class OcpOnboardingWorkFlowConfiguration {
 			@Qualifier("onboardingOcpAssessmentTask") OnboardingOcpAssessmentTask onboardingOcpAssessmentTask) {
 		// @formatter:off
         return SequentialFlow.Builder.aNewSequentialFlow()
-                .named("onboardingOcpAssessment" + WorkFlowConstants.ASSESSMENT_WORKFLOW)
+                .named("onboardingAssessment" + WorkFlowConstants.ASSESSMENT_WORKFLOW)
                 .execute(onboardingOcpAssessmentTask)
                 .build();
         // @formatter:on
@@ -117,7 +117,7 @@ public class OcpOnboardingWorkFlowConfiguration {
 			@Value("${JIRA_URL:test}") String url, @Value("${JIRA_USER:user}") String username,
 			@Value("${JIRA_TOKEN:token}") String password) {
 		return new JiraTicketApprovalWorkFlowCheckerTask(jiraTicketApprovalEscalationWorkFlow,
-				new Date().getTime() / 1000 + 60, url, username, password);
+				new Date().getTime() / 1000 + 30, url, username, password);
 	}
 
 	@Bean(name = "jiraTicketApprovalWorkFlowChecker")
@@ -146,29 +146,29 @@ public class OcpOnboardingWorkFlowConfiguration {
 		return new JiraTicketEmailNotificationWorkFlowTask(mailServiceUrl, mailServiceSiteName);
 	}
 
-	@Bean
-	NotificationWorkFlowTask notificationWorkFlowTask(
-			@Value("${NOTIFICATION_SERVER_URL:test}") String notificationServiceUrl) {
-		return new NotificationWorkFlowTask(notificationServiceUrl);
-	}
-
 	@Bean(name = "workFlowA")
 	@Infrastructure
 	WorkFlow workFlowA(
 			@Qualifier("jiraTicketCreationWorkFlowTask") JiraTicketCreationWorkFlowTask jiraTicketCreationWorkFlowTask,
-			@Qualifier("notificationWorkFlowTask") NotificationWorkFlowTask notificationWorkFlowTask,
 			@Qualifier("jiraTicketEmailNotificationWorkFlowTask") JiraTicketEmailNotificationWorkFlowTask jiraTicketEmailNotificationWorkFlowTask) {
 		return SequentialFlow.Builder.aNewSequentialFlow().named("workFlowA").execute(jiraTicketCreationWorkFlowTask)
-				.then(notificationWorkFlowTask).then(jiraTicketEmailNotificationWorkFlowTask).build();
+				.then(jiraTicketEmailNotificationWorkFlowTask).build();
 	}
 
 	// WORKFLOW B - Sequential Flow:
 	// - OcpAppDeploymentWorkFlowTask
-	// - JiraTicketEmailNotificationWorkFlowTask
+	// - NotificationWorkFlowTask
+	// - AppLinkEmailNotificationWorkFlowTask
 	@Bean
 	OcpAppDeploymentWorkFlowTask ocpAppDeploymentWorkFlowTask(
 			@Value("${CLUSTER_API_URL:cluster}") String clusterApiUrl) {
 		return new OcpAppDeploymentWorkFlowTask(clusterApiUrl);
+	}
+
+	@Bean
+	NotificationWorkFlowTask notificationWorkFlowTask(
+			@Value("${NOTIFICATION_SERVER_URL:test}") String notificationServiceUrl) {
+		return new NotificationWorkFlowTask(notificationServiceUrl);
 	}
 
 	@Bean
@@ -182,9 +182,10 @@ public class OcpOnboardingWorkFlowConfiguration {
 	@Infrastructure
 	WorkFlow workFlowB(
 			@Qualifier("ocpAppDeploymentWorkFlowTask") OcpAppDeploymentWorkFlowTask ocpAppDeploymentWorkFlowTask,
+			@Qualifier("notificationWorkFlowTask") NotificationWorkFlowTask notificationWorkFlowTask,
 			@Qualifier("appLinkEmailNotificationWorkFlowTask") AppLinkEmailNotificationWorkFlowTask appLinkEmailNotificationWorkFlowTask) {
 		return SequentialFlow.Builder.aNewSequentialFlow().named("workFlowB").execute(ocpAppDeploymentWorkFlowTask)
-				.then(appLinkEmailNotificationWorkFlowTask).build();
+				.then(notificationWorkFlowTask).then(appLinkEmailNotificationWorkFlowTask).build();
 	}
 
 	// OCP ONBOARDING WORKFLOW - Sequential Flow:

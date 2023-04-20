@@ -66,7 +66,8 @@ public class PatternDetectionAssessmentTask extends GithubPatternDetectionTask {
 				);
 			// @formatter:on
 			// Get all the file names
-			var data = super.getDirectoriesAndFiles(getRequiredParameterValue(workContext, ORG), getRequiredParameterValue(workContext, REPO));
+			var data = super.getDirectoriesAndFiles(getRequiredParameterValue(workContext, ORG),
+					getRequiredParameterValue(workContext, REPO));
 			List<String> fileNames = new ArrayList<>();
 			for (Entry<String, List<String>> directory : data.entrySet()) {
 				fileNames.addAll(directory.getValue());
@@ -75,7 +76,7 @@ public class PatternDetectionAssessmentTask extends GithubPatternDetectionTask {
 			// Clues to use during test cases
 			BasicPatternImpl ocpTargetApp = configureCluesAndPatterns();
 			WorkContext context =
-					// @formatter:off
+			// @formatter:off
 					PatternDetectionWorkContextDelegate
 					.WorkContextBuilder.builder()
 					.addThisToDesiredPatterns(ocpTargetApp)
@@ -92,8 +93,8 @@ public class PatternDetectionAssessmentTask extends GithubPatternDetectionTask {
 			if (results.isAllPatternsWhereDetected()) {
 				// put workflow option for ocp onboarding in the context
 				WorkContextDelegate.write(workContext, WorkContextDelegate.ProcessType.WORKFLOW_EXECUTION,
-				         WorkContextDelegate.Resource.WORKFLOW_OPTIONS,
-				         // @formatter:off
+						WorkContextDelegate.Resource.WORKFLOW_OPTIONS,
+						// @formatter:off
 				         new WorkFlowOptions.Builder()
 				         .addNewOption(workFlowOptions.stream().filter(option -> option.getDisplayName().contains("Onboarding")).findFirst().get())
 				         .build());
@@ -101,8 +102,8 @@ public class PatternDetectionAssessmentTask extends GithubPatternDetectionTask {
 			}
 			else {
 				WorkContextDelegate.write(workContext, WorkContextDelegate.ProcessType.WORKFLOW_EXECUTION,
-				         WorkContextDelegate.Resource.WORKFLOW_OPTIONS,
-				         // @formatter:off
+						WorkContextDelegate.Resource.WORKFLOW_OPTIONS,
+						// @formatter:off
 				         new WorkFlowOptions.Builder()
 				         .addNewOption(workFlowOptions.stream().filter(option -> option.getDisplayName().contains("Not Supported Application")).findFirst().get())
 				         .build());
