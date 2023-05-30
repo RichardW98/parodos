@@ -76,9 +76,9 @@ public class Move2KubeTransform extends Move2KubeBase {
 
 	private boolean sendNotification(String userID, String workspaceID, String projectID) {
 
-		String url = String.format("http://localhost:8081/workspaces/%s/projects/%s", workspaceID, projectID);
+		String url = String.format("http://localhost:8082/workspaces/%s/projects/%s", workspaceID, projectID);
 		String message = String.format(
-				"You need to complete some information for your transformation in the following url <a href=\"%s\"> %s</a>",
+				"You need to complete some information for your transformation in the following url <a href=\"%s\">%s</a>",
 				url, url);
 
 		// @TODO userID is the ID, but we need the username, so hardcode it here for now.
@@ -87,9 +87,10 @@ public class Move2KubeTransform extends Move2KubeBase {
 
 		HttpEntity<NotificationRequest> notificationRequestHttpEntity = RestUtils.getRequestWithHeaders(request, "test",
 				"test");
-		ResponseEntity<String> response = RestUtils.executePost("http://localhost:8082/api/v1/messages",
+		ResponseEntity<String> response = RestUtils.executePost("http://localhost:8081/api/v1/messages",
 				notificationRequestHttpEntity);
 
+		taskLogger.logInfoWithSlf4j("please check notification message to customize transformation!");
 		return response.getStatusCode().is2xxSuccessful();
 	}
 
@@ -100,6 +101,7 @@ public class Move2KubeTransform extends Move2KubeBase {
 		if (response == null) {
 			throw new IllegalArgumentException("Cannot start transformation");
 		}
+		taskLogger.logInfoWithSlf4j("transformation is initiated!");
 		return response.getId();
 	}
 
@@ -109,6 +111,7 @@ public class Move2KubeTransform extends Move2KubeBase {
 			throw new RuntimeException("Plan cannot be retrieved");
 		}
 		this.plan = response.toJson();
+		taskLogger.logInfoWithSlf4j("plan is created!");
 	}
 
 }

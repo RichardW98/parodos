@@ -1,6 +1,7 @@
 package com.redhat.parodos.examples.move2kube.task;
 
 import java.io.File;
+import java.util.Map;
 
 import com.redhat.parodos.workflows.work.DefaultWorkReport;
 import com.redhat.parodos.workflows.work.WorkContext;
@@ -58,7 +59,8 @@ public class Move2KubePlan extends Move2KubeBase {
 					}
 					continue;
 				}
-				log.error("Plan is here in the {} attempt", i);
+				addParameter("m2kPlanName", (String)((Map)((Map)new org.yaml.snakeyaml.Yaml().load(plan.getPlan())).get("metadata")).get("name"));
+				taskLogger.logInfoWithSlf4j("Plan is here in the {} attempt", String.valueOf(i));
 				break;
 			}
 		}

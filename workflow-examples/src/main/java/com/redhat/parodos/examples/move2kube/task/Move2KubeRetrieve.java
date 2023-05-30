@@ -56,11 +56,11 @@ public class Move2KubeRetrieve extends Move2KubeBase {
 		}
 
 		try {
-			Path finalPath = Files.newDirectoryStream(Paths.get(tempDir.toString() + "/output/")).iterator().next();
-			log.info("FinalPath is --->{} and GitPath is {}", finalPath, sourcePath);
-			FileUtils.copyDirectory(finalPath.resolve(Paths.get("deploy")).toFile(),
+			Path finalPath = Paths.get(tempDir.toString() + "/output/");
+			taskLogger.logInfoWithSlf4j("FinalPath is --->{} and GitPath is {}", finalPath.toString(), sourcePath.toString());
+			FileUtils.copyDirectory(finalPath.resolve(Paths.get(getRequiredParameterValue("m2kPlanName"))).resolve(Paths.get("deploy")).toFile(),
 					Paths.get(sourcePath).resolve("deploy").toFile());
-			FileUtils.copyDirectory(finalPath.resolve(Paths.get("scripts")).toFile(),
+			FileUtils.copyDirectory(finalPath.resolve(Paths.get(getRequiredParameterValue("m2kPlanName"))).resolve(Paths.get("scripts")).toFile(),
 					Paths.get(sourcePath).resolve("scripts").toFile());
 		}
 		catch (Exception e) {

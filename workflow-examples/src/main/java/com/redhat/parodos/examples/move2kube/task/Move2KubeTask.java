@@ -53,7 +53,7 @@ public class Move2KubeTask extends Move2KubeBase {
 	 * Executed by the InfrastructureTask engine as part of the Workflow
 	 */
 	public WorkReport execute(WorkContext workContext) {
-		log.debug("Init Move2Kube Project initialization!");
+		taskLogger.logInfoWithSlf4j("Init Move2Kube Project initialization!");
 		String workspaceID = null;
 		Map<String, ProjectInputsValue> workspaceInputs = null;
 		try {

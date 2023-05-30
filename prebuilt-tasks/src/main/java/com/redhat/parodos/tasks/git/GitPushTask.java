@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 @AllArgsConstructor
 @Slf4j
@@ -85,7 +87,19 @@ public class GitPushTask extends BaseWorkFlowTask {
 		Git git = new Git(repo);
 
 		try {
-			git.push().setForce(false).setRemote(remoteName).call();
+			git.branchCreate().setName(remoteName).call();
+//			git.push().setForce(false).setRemote(remoteName).call();
+		}
+		catch(Exception e) {
+			taskLogger.logErrorWithSlf4j(e.getMessage());
+		}
+
+		try {
+			git.push().setRemote("origin").setForce(true).setRefSpecs(new RefSpec(remoteName + ":" + remoteName)).setCredentialsProvider(new UsernamePasswordCredentialsProvider("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","")).call();
+			taskLogger.logInfoWithSlf4j("branch with new manifests: {} has been successfully pushed to remote!", remoteName);
+		}
+		catch(Exception e) {
+			taskLogger.logErrorWithSlf4j(e.getMessage());
 		}
 		finally {
 			git.close();

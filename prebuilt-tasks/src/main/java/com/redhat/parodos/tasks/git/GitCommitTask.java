@@ -54,7 +54,7 @@ public class GitCommitTask extends BaseWorkFlowTask {
 		try (Repository repo = getRepo(path)) {
 			Git git = new Git(repo);
 			git.add().addFilepattern(".").call();
-			git.commit().setSign(false).setMessage(commitMessage).call();
+			git.commit().setMessage(commitMessage).call();
 		}
 		catch (IOException e) {
 			return new DefaultWorkReport(WorkStatus.FAILED, workContext,

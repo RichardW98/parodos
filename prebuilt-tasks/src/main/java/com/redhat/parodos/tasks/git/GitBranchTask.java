@@ -31,7 +31,7 @@ public class GitBranchTask extends BaseWorkFlowTask {
 				WorkParameter.builder().key(GitConstants.GIT_REPO_PATH).type(WorkParameterType.TEXT).optional(true)
 						.description("path where the git repo is located").build(),
 				WorkParameter.builder().key(GitConstants.BRANCH).type(WorkParameterType.TEXT).optional(false)
-						.description("branch whichs need to be created").build());
+						.description("branch which needs to be created").build());
 	}
 
 	public String getRepoPath(WorkContext workContext) {
