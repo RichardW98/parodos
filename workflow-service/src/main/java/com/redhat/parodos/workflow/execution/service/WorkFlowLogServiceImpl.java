@@ -79,8 +79,9 @@ public class WorkFlowLogServiceImpl implements WorkFlowLogService {
         WorkFlowExecution workFlowExecution = Optional
                 .ofNullable(workFlowRepository.findFirstByMainWorkFlowExecutionIdAndWorkFlowDefinitionId(
                         mainWorkflowExecutionId, workFlowTaskDefinition.getWorkFlowDefinition().getId()))
-                .orElse(workFlowRepository.findById(mainWorkflowExecutionId).orElseThrow(
-                        () -> new ResourceNotFoundException(ResourceType.WORKFLOW_EXECUTION, mainWorkflowExecutionId)));
+                .or(() -> workFlowRepository.findById(mainWorkflowExecutionId))
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(ResourceType.WORKFLOW_EXECUTION, mainWorkflowExecutionId));
         return Optional
                 .ofNullable(workFlowTaskRepository.findByWorkFlowExecutionIdAndWorkFlowTaskDefinitionId(
                         workFlowExecution.getId(), workFlowTaskDefinition.getId()))
