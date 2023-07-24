@@ -30,13 +30,13 @@ public class GitCloneTask extends BaseWorkFlowTask {
 
 	@Override
 	public @NonNull List<WorkParameter> getWorkFlowTaskParameters() {
-		return List.of(
-				WorkParameter.builder().key(GitConstants.URI).type(WorkParameterType.TEXT).optional(false)
-						.description("Url to clone from").build(),
-				WorkParameter.builder().key(GitConstants.BRANCH).type(WorkParameterType.TEXT).optional(true)
-						.description("Branch to clone from, default main").build(),
-				WorkParameter.builder().key("credentials").type(WorkParameterType.TEXT).optional(false)
-						.description("Git credential").build());
+		return List.of();
+				// WorkParameter.builder().key(GitConstants.URI).type(WorkParameterType.TEXT).optional(false)
+				// .description("Url to clone from").build(),
+				// WorkParameter.builder().key(GitConstants.BRANCH).type(WorkParameterType.TEXT).optional(true)
+				// .description("Branch to clone from, default main").build(),
+//				WorkParameter.builder().key("credentials").type(WorkParameterType.TEXT).optional(false)
+//						.description("Git credential").build());
 	}
 
 	@Override
