@@ -18,7 +18,6 @@ import com.redhat.parodos.workflow.annotation.Checker;
 import com.redhat.parodos.workflow.annotation.Infrastructure;
 import com.redhat.parodos.workflow.annotation.Parameter;
 import com.redhat.parodos.workflow.consts.WorkFlowConstants;
-import com.redhat.parodos.workflow.parameter.WorkParameter;
 import com.redhat.parodos.workflow.parameter.WorkParameterType;
 import com.redhat.parodos.workflows.workflow.ParallelFlow;
 import com.redhat.parodos.workflows.workflow.SequentialFlow;
@@ -119,12 +118,12 @@ public class move2kubeWorkFlowConfiguration {
 	}
 
 	@Bean(name = "move2KubeWorkFlow" + WorkFlowConstants.INFRASTRUCTURE_WORKFLOW)
-	@Infrastructure(parameters = { @Parameter(key = "uri", description = "git repo uri",
-			type = WorkParameterType.TEXT, optional = false),
+	@Infrastructure(parameters = {
+			@Parameter(key = "uri", description = "git repo uri", type = WorkParameterType.TEXT, optional = false),
 			@Parameter(key = "branch", description = "Branch to clone from, default main",
 					type = WorkParameterType.TEXT, optional = false),
-			@Parameter(key = "credentials", description = "Git credential",
-					type = WorkParameterType.TEXT, optional = false)})
+			@Parameter(key = "credentials", description = "Git credential", type = WorkParameterType.TEXT,
+					optional = false) })
 	WorkFlow move2kubeWorkflow(@Qualifier("preparationWorkflow") WorkFlow preparationWorkflow,
 			@Qualifier("move2KubePlan") Move2KubePlan move2KubePlan,
 			@Qualifier("move2KubeTransform") Move2KubeTransform move2KubeTransform,
