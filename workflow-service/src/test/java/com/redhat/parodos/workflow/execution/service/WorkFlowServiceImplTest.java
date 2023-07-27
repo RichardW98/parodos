@@ -9,6 +9,9 @@ import java.util.UUID;
 
 import com.redhat.parodos.common.exceptions.IllegalWorkFlowStateException;
 import com.redhat.parodos.common.exceptions.ResourceNotFoundException;
+import com.redhat.parodos.common.exceptions.UnregisteredWorkFlowException;
+import com.redhat.parodos.common.exceptions.WorkFlowNotFoundException;
+import com.redhat.parodos.common.exceptions.WorkFlowWrongTypeException;
 import com.redhat.parodos.project.dto.response.ProjectResponseDTO;
 import com.redhat.parodos.project.service.ProjectService;
 import com.redhat.parodos.user.entity.User;
@@ -128,15 +131,10 @@ class WorkFlowServiceImplTest {
 		when(this.workFlowDelegate.getWorkFlowByName(any())).thenReturn(null);
 
 		// when
-		WorkReport report = this.workFlowService.execute(WorkFlowRequestDTO.builder().projectId(UUID.randomUUID())
-				.works(List.of()).workFlowName(TEST_WORKFLOW_NAME).build());
-
-		// then
-		assertNotNull(report);
-		assertEquals(report.getStatus().toString(), "FAILED");
-		assertNotNull(report.getError());
-
-		assertNotNull(report.getWorkContext());
+		assertThat(assertThrows(WorkFlowNotFoundException.class,
+				() -> this.workFlowService.execute(WorkFlowRequestDTO.builder().projectId(UUID.randomUUID())
+						.works(List.of()).workFlowName(TEST_WORKFLOW_NAME).build())))
+								.hasMessage("workflow '%s' cannot be found!".formatted(TEST_WORKFLOW_NAME));
 
 		verify(this.workFlowDelegate, times(1)).getWorkFlowByName(any());
 		verify(this.workFlowDelegate, times(0)).initWorkFlowContext(any(), any());
@@ -377,15 +375,11 @@ class WorkFlowServiceImplTest {
 		when(this.workFlowDelegate.getWorkFlowByName(TEST_WORKFLOW_NAME)).thenReturn(workFlow);
 
 		// when
-		WorkReport report = this.workFlowService.execute(WorkFlowRequestDTO.builder().projectId(UUID.randomUUID())
-				.works(List.of()).workFlowName(TEST_WORKFLOW_NAME).build());
-
+		assertThat(assertThrows(WorkFlowWrongTypeException.class,
+				() -> this.workFlowService.execute(WorkFlowRequestDTO.builder().projectId(UUID.randomUUID())
+						.works(List.of()).workFlowName(TEST_WORKFLOW_NAME).build())))
+								.hasMessage("workflow '%s' is not main workflow!".formatted(TEST_WORKFLOW_NAME));
 		// then
-		assertNotNull(report);
-		assertEquals(report.getStatus().toString(), "FAILED");
-		assertNotNull(report.getError());
-
-		assertNotNull(report.getWorkContext());
 
 		verify(this.workFlowDelegate, times(1)).getWorkFlowByName(any());
 		verify(this.workFlowDelegate, times(0)).initWorkFlowContext(any(), any());
@@ -402,15 +396,10 @@ class WorkFlowServiceImplTest {
 		when(this.workFlowDelegate.getWorkFlowByName(TEST_WORKFLOW_NAME)).thenReturn(workFlow);
 
 		// when
-		WorkReport report = this.workFlowService.execute(WorkFlowRequestDTO.builder().projectId(UUID.randomUUID())
-				.works(List.of()).workFlowName(TEST_WORKFLOW_NAME).build());
-
-		// then
-		assertNotNull(report);
-		assertEquals(report.getStatus().toString(), "FAILED");
-		assertNotNull(report.getError());
-
-		assertNotNull(report.getWorkContext());
+		assertThat(assertThrows(UnregisteredWorkFlowException.class,
+				() -> this.workFlowService.execute(WorkFlowRequestDTO.builder().projectId(UUID.randomUUID())
+						.works(List.of()).workFlowName(TEST_WORKFLOW_NAME).build())))
+								.hasMessage("workflow '%s' is not registered!".formatted(TEST_WORKFLOW_NAME));
 
 		verify(this.workFlowDelegate, times(1)).getWorkFlowByName(any());
 		verify(this.workFlowDelegate, never()).initWorkFlowContext(any(), any());
@@ -1211,7 +1200,7 @@ class WorkFlowServiceImplTest {
 		UUID projectId = UUID.randomUUID();
 		SequentialFlow workFlow = SequentialFlow.Builder.aNewSequentialFlow().named("test").execute(work).build();
 		WorkFlowDefinition workFlowDefinition = WorkFlowDefinition.builder().name(TEST_WORKFLOW_NAME)
-				.rollbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Rollback_" + TEST_WORKFLOW_NAME).build())
+				.fallbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Fallback_" + TEST_WORKFLOW_NAME).build())
 				.build();
 
 		WorkFlowExecution restartedWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
@@ -1226,7 +1215,7 @@ class WorkFlowServiceImplTest {
 		when(this.userService.getUserEntityByUsername("test-user")).thenReturn(user);
 		when(this.workFlowRepository.findById(executionID)).thenReturn(Optional.of(invokingWorkFlowExecution));
 		when(this.workFlowDefinitionService.getWorkFlowDefinitionByName(TEST_WORKFLOW_NAME))
-				.thenReturn(WorkFlowDefinitionResponseDTO.builder().rollbackWorkflow("rollback").build());
+				.thenReturn(WorkFlowDefinitionResponseDTO.builder().fallbackWorkflow("fallback").build());
 		assertThat(assertThrows(IllegalWorkFlowStateException.class, () -> this.workFlowService.restart(executionID)))
 				.hasMessage(String.format(
 						"workflow id: %s from workflow name: %s has not Workflow Execution Context saved in the database, cannot restart it!",
@@ -1247,7 +1236,7 @@ class WorkFlowServiceImplTest {
 		UUID projectId = UUID.randomUUID();
 		SequentialFlow workFlow = SequentialFlow.Builder.aNewSequentialFlow().named("test").execute(work).build();
 		WorkFlowDefinition workFlowDefinition = WorkFlowDefinition.builder().name(TEST_WORKFLOW_NAME)
-				.rollbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Rollback_" + TEST_WORKFLOW_NAME).build())
+				.fallbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Fallback_" + TEST_WORKFLOW_NAME).build())
 				.build();
 
 		WorkContext invokingWorkContext = new WorkContext();
@@ -1272,7 +1261,7 @@ class WorkFlowServiceImplTest {
 		when(this.workFlowRepository.findById(executionID)).thenReturn(Optional.of(invokingWorkFlowExecution));
 		when(this.workFlowDelegate.getWorkFlowByName(TEST_WORKFLOW_NAME)).thenReturn(workFlow);
 		when(this.workFlowDefinitionService.getWorkFlowDefinitionByName(TEST_WORKFLOW_NAME))
-				.thenReturn(WorkFlowDefinitionResponseDTO.builder().rollbackWorkflow("rollback").build());
+				.thenReturn(WorkFlowDefinitionResponseDTO.builder().fallbackWorkflow("fallback").build());
 		WorkReport report = this.workFlowService.restart(executionID);
 
 		// then
@@ -1298,7 +1287,7 @@ class WorkFlowServiceImplTest {
 		UUID projectId = UUID.randomUUID();
 		SequentialFlow workFlow = SequentialFlow.Builder.aNewSequentialFlow().named("test").execute(work).build();
 		WorkFlowDefinition workFlowDefinition = WorkFlowDefinition.builder().name(TEST_WORKFLOW_NAME)
-				.rollbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Rollback_" + TEST_WORKFLOW_NAME).build())
+				.fallbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Fallback_" + TEST_WORKFLOW_NAME).build())
 				.build();
 
 		WorkFlowExecution restartedWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
@@ -1320,7 +1309,7 @@ class WorkFlowServiceImplTest {
 		when(this.workFlowRepository.findById(executionID)).thenReturn(Optional.of(invokingWorkFlowExecution));
 		when(this.workFlowDelegate.getWorkFlowByName(TEST_WORKFLOW_NAME)).thenReturn(workFlow);
 		when(this.workFlowDefinitionService.getWorkFlowDefinitionByName(TEST_WORKFLOW_NAME))
-				.thenReturn(WorkFlowDefinitionResponseDTO.builder().rollbackWorkflow("rollback").build());
+				.thenReturn(WorkFlowDefinitionResponseDTO.builder().fallbackWorkflow("fallback").build());
 		WorkReport report = this.workFlowService.restart(executionID);
 
 		// then
@@ -1346,7 +1335,7 @@ class WorkFlowServiceImplTest {
 		UUID projectId = UUID.randomUUID();
 		SequentialFlow workFlow = SequentialFlow.Builder.aNewSequentialFlow().named("test").execute(work).build();
 		WorkFlowDefinition workFlowDefinition = WorkFlowDefinition.builder().name(TEST_WORKFLOW_NAME)
-				.rollbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Rollback_" + TEST_WORKFLOW_NAME).build())
+				.fallbackWorkFlowDefinition(WorkFlowDefinition.builder().name("Fallback_" + TEST_WORKFLOW_NAME).build())
 				.build();
 
 		WorkContext invokingWorkContext = new WorkContext();
@@ -1376,8 +1365,180 @@ class WorkFlowServiceImplTest {
 		when(this.workFlowRepository.findById(executionID)).thenReturn(Optional.of(invokingWorkFlowExecution));
 		when(this.workFlowDelegate.getWorkFlowByName(TEST_WORKFLOW_NAME)).thenReturn(workFlow);
 		when(this.workFlowDefinitionService.getWorkFlowDefinitionByName(TEST_WORKFLOW_NAME))
-				.thenReturn(WorkFlowDefinitionResponseDTO.builder().rollbackWorkflow("rollback").build());
+				.thenReturn(WorkFlowDefinitionResponseDTO.builder().fallbackWorkflow("fallback").build());
 		WorkReport report = this.workFlowService.restart(executionID);
+
+		// then
+		assertNotNull(report);
+		assertEquals("IN_PROGRESS", report.getStatus().toString());
+		assertNull(report.getError());
+		assertNotNull(report.getWorkContext());
+		// getWorkFlowByName is called in the execute method of the workflowExecutor
+		verify(this.workFlowDelegate, times(1)).getWorkFlowByName(any());
+		verify(this.workFlowRepository, times(2)).save(any());
+		verify(this.workFlowRepository, times(2)).findById(any());
+		verify(work, times(1)).execute(invokingWorkContext);
+	}
+
+	///////
+
+	/////////////////////////////////////////////////////////
+
+	@Test
+	@WithMockUser(username = "test-user")
+	void executeFallbackWithNotExistingExecution() {
+		User user = User.builder().username("test-user").build();
+		user.setId(UUID.randomUUID());
+		// when
+		when(this.workFlowRepository.findById(any())).thenReturn(Optional.empty());
+		when(this.userService.getUserEntityByUsername("test-user")).thenReturn(user);
+
+		// then
+		UUID executionID = UUID.randomUUID();
+		assertThat(assertThrows(ResourceNotFoundException.class,
+				() -> this.workFlowService.executeFallbackWorkFlow("", executionID)))
+						.hasMessage("Workflow execution with ID: " + executionID + " not found");
+
+		verify(this.workFlowRepository, times(0)).save(any());
+		verify(this.workFlowRepository, times(1)).findById(any());
+	}
+
+	@Test
+	@WithMockUser(username = "test-user")
+	void executeFallbackWorkflowExecutionWithNullWorkflowExecutionContext() {
+		// given
+		Work work = mock(Work.class);
+		User user = User.builder().username("test-user").build();
+		user.setId(UUID.randomUUID());
+		UUID executionID = UUID.randomUUID();
+		UUID projectId = UUID.randomUUID();
+		SequentialFlow workFlow = SequentialFlow.Builder.aNewSequentialFlow().named("test").execute(work).build();
+		WorkFlowDefinition workFlowDefinition = WorkFlowDefinition.builder().name("Fallback_" + TEST_WORKFLOW_NAME)
+				.build();
+
+		WorkContext invokingWorkContext = new WorkContext();
+		WorkFlowExecution invokingWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
+				.user(user).workFlowDefinition(workFlowDefinition).workFlowExecutionContext(null).build();
+		invokingWorkFlowExecution.setId(executionID);
+		WorkFlowExecution fallbackWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
+				.user(user).projectId(projectId).build();
+		fallbackWorkFlowExecution.setId(UUID.randomUUID());
+
+		// when
+		when(this.userService.getUserEntityByUsername("test-user")).thenReturn(user);
+		when(this.workFlowRepository.save(any())).thenReturn(fallbackWorkFlowExecution);
+		when(this.workFlowRepository.findById(executionID)).thenReturn(Optional.of(invokingWorkFlowExecution));
+		when(this.workFlowDelegate.getWorkFlowByName("Fallback_" + TEST_WORKFLOW_NAME)).thenReturn(workFlow);
+		when(this.workFlowDefinitionRepository.findFirstByName(workFlowDefinition.getName()))
+				.thenReturn(workFlowDefinition);
+		when(this.workFlowDefinitionService.getWorkFlowDefinitionByName("Fallback_" + TEST_WORKFLOW_NAME))
+				.thenReturn(WorkFlowDefinitionResponseDTO.builder().fallbackWorkflow("fallback").build());
+		WorkReport report = this.workFlowService.executeFallbackWorkFlow(workFlowDefinition.getName(), executionID);
+
+		// then
+		assertNotNull(report);
+		assertEquals("IN_PROGRESS", report.getStatus().toString());
+		assertNull(report.getError());
+		assertNotNull(report.getWorkContext());
+		// getWorkFlowByName is called in the execute method of the workflowExecutor
+		verify(this.workFlowDelegate, times(1)).getWorkFlowByName(any());
+		verify(this.workFlowRepository, times(2)).save(any());
+		verify(this.workFlowRepository, times(2)).findById(any());
+		verify(work, times(1)).execute(any());
+	}
+
+	@Test
+	@WithMockUser(username = "test-user")
+	void executeFallbackWorkflowExecutionWithNullWorkContext() {
+		// given
+		Work work = mock(Work.class);
+		User user = User.builder().username("test-user").build();
+		user.setId(UUID.randomUUID());
+		UUID executionID = UUID.randomUUID();
+		UUID projectId = UUID.randomUUID();
+		SequentialFlow workFlow = SequentialFlow.Builder.aNewSequentialFlow().named("test").execute(work).build();
+		WorkFlowDefinition workFlowDefinition = WorkFlowDefinition.builder().name("Fallback_" + TEST_WORKFLOW_NAME)
+				.build();
+
+		WorkFlowExecution fallbackWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
+				.user(user).projectId(projectId).build();
+		fallbackWorkFlowExecution.setId(UUID.randomUUID());
+		WorkFlowExecution invokingWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
+				.user(user).workFlowDefinition(workFlowDefinition)
+				.workFlowExecutionContext(WorkFlowExecutionContext.builder().workContext(null).build()).build();
+		invokingWorkFlowExecution.setId(executionID);
+
+		// when
+		when(work.execute(any())).thenReturn(new DefaultWorkReport(WorkStatus.COMPLETED, new WorkContext() {
+			{
+				put("foo", "bar");
+			}
+		}));
+		when(this.userService.getUserEntityByUsername("test-user")).thenReturn(user);
+		when(this.workFlowRepository.save(any())).thenReturn(fallbackWorkFlowExecution);
+		when(this.workFlowRepository.findById(executionID)).thenReturn(Optional.of(invokingWorkFlowExecution));
+		when(this.workFlowDelegate.getWorkFlowByName("Fallback_" + TEST_WORKFLOW_NAME)).thenReturn(workFlow);
+		when(this.workFlowDefinitionRepository.findFirstByName(workFlowDefinition.getName()))
+				.thenReturn(workFlowDefinition);
+		when(this.workFlowDefinitionService.getWorkFlowDefinitionByName("Fallback_" + TEST_WORKFLOW_NAME))
+				.thenReturn(WorkFlowDefinitionResponseDTO.builder().fallbackWorkflow("fallback").build());
+		WorkReport report = this.workFlowService.executeFallbackWorkFlow(workFlowDefinition.getName(), executionID);
+
+		// then
+		assertNotNull(report);
+		assertEquals("IN_PROGRESS", report.getStatus().toString());
+		assertNull(report.getError());
+		assertNotNull(report.getWorkContext());
+		// getWorkFlowByName is called in the execute method of the workflowExecutor
+		verify(this.workFlowDelegate, times(1)).getWorkFlowByName(any());
+		verify(this.workFlowRepository, times(2)).save(any());
+		verify(this.workFlowRepository, times(2)).findById(any());
+		verify(work, times(1)).execute(any());
+	}
+
+	@Test
+	@WithMockUser(username = "test-user")
+	void executeFallbackWithExistingExecutionArguments() {
+		// given
+		Work work = mock(Work.class);
+		User user = User.builder().username("test-user").build();
+		user.setId(UUID.randomUUID());
+		UUID executionID = UUID.randomUUID();
+		UUID projectId = UUID.randomUUID();
+		SequentialFlow workFlow = SequentialFlow.Builder.aNewSequentialFlow().named("test").execute(work).build();
+		WorkFlowDefinition workFlowDefinition = WorkFlowDefinition.builder().name("Fallback_" + TEST_WORKFLOW_NAME)
+				.build();
+
+		WorkContext invokingWorkContext = new WorkContext();
+		WorkContextDelegate.write(invokingWorkContext, WorkContextDelegate.ProcessType.WORKFLOW_EXECUTION,
+				TEST_WORKFLOW_NAME, WorkContextDelegate.Resource.ARGUMENTS, Map.of("WORKFLOW_ARG", "argWorkflow"));
+		WorkContextDelegate.write(invokingWorkContext, WorkContextDelegate.ProcessType.WORKFLOW_TASK_EXECUTION,
+				TEST_WORKFLOW_TASK_NAME, WorkContextDelegate.Resource.ARGUMENTS,
+				Map.of("WORKFLOW_TASK_ARG", "argWorkflowTASK"));
+		WorkFlowExecution fallbackWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
+				.user(user).projectId(projectId).build();
+		fallbackWorkFlowExecution.setId(UUID.randomUUID());
+		WorkFlowExecution invokingWorkFlowExecution = WorkFlowExecution.builder().status(WorkStatus.COMPLETED)
+				.user(user).workFlowDefinition(workFlowDefinition)
+				.workFlowExecutionContext(WorkFlowExecutionContext.builder().workContext(invokingWorkContext).build())
+				.build();
+		invokingWorkFlowExecution.setId(executionID);
+
+		// when
+		when(work.execute(invokingWorkContext))
+				.thenReturn(new DefaultWorkReport(WorkStatus.COMPLETED, new WorkContext() {
+					{
+						put("foo", "bar");
+					}
+				}));
+		when(this.userService.getUserEntityByUsername("test-user")).thenReturn(user);
+		when(this.workFlowRepository.save(any())).thenReturn(fallbackWorkFlowExecution);
+		when(this.workFlowRepository.findById(executionID)).thenReturn(Optional.of(invokingWorkFlowExecution));
+		when(this.workFlowDelegate.getWorkFlowByName("Fallback_" + TEST_WORKFLOW_NAME)).thenReturn(workFlow);
+		when(this.workFlowDefinitionService.getWorkFlowDefinitionByName("Fallback_" + TEST_WORKFLOW_NAME))
+				.thenReturn(WorkFlowDefinitionResponseDTO.builder().fallbackWorkflow("fallback").build());
+		when(workFlowDefinitionRepository.findFirstByName(workFlowDefinition.getName())).thenReturn(workFlowDefinition);
+		WorkReport report = this.workFlowService.executeFallbackWorkFlow(workFlowDefinition.getName(), executionID);
 
 		// then
 		assertNotNull(report);

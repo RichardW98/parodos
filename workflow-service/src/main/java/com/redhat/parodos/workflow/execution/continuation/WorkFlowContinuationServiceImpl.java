@@ -23,6 +23,7 @@ import com.redhat.parodos.workflow.execution.entity.WorkFlowExecution;
 import com.redhat.parodos.workflow.execution.repository.WorkFlowRepository;
 import com.redhat.parodos.workflow.execution.service.WorkFlowExecutor;
 import com.redhat.parodos.workflow.execution.service.WorkFlowExecutor.ExecutionContext;
+import com.redhat.parodos.workflow.execution.service.WorkFlowService;
 import com.redhat.parodos.workflows.work.WorkStatus;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,9 +46,13 @@ public class WorkFlowContinuationServiceImpl implements WorkFlowContinuationServ
 
 	private final WorkFlowExecutor workFlowExecutor;
 
-	public WorkFlowContinuationServiceImpl(WorkFlowRepository workFlowRepository, WorkFlowExecutor workFlowExecutor) {
+	private final WorkFlowService workFlowService;
+
+	public WorkFlowContinuationServiceImpl(WorkFlowRepository workFlowRepository, WorkFlowExecutor workFlowExecutor,
+			WorkFlowService workFlowService) {
 		this.workFlowRepository = workFlowRepository;
 		this.workFlowExecutor = workFlowExecutor;
+		this.workFlowService = workFlowService;
 	}
 
 	/**
@@ -68,7 +73,7 @@ public class WorkFlowContinuationServiceImpl implements WorkFlowContinuationServ
 					.userId(workFlowExecution.getUser().getId()).workFlowName(workFlowDefinition.getName())
 					.workContext(workFlowExecution.getWorkFlowExecutionContext().getWorkContext())
 					.executionId(workFlowExecution.getId())
-					.rollbackWorkFlowName(Optional.ofNullable(workFlowDefinition.getRollbackWorkFlowDefinition())
+					.fallbackWorkFlowName(Optional.ofNullable(workFlowDefinition.getFallbackWorkFlowDefinition())
 							.map(WorkFlowDefinition::getName).orElse(null))
 					.build());
 			// TODO: continue 'FAILED' Checkers in this main workflow execution
@@ -77,7 +82,7 @@ public class WorkFlowContinuationServiceImpl implements WorkFlowContinuationServ
 
 	@Override
 	public void continueWorkFlow(ExecutionContext executionContext) {
-		workFlowExecutor.execute(executionContext);
+		workFlowExecutor.execute(executionContext, workFlowService);
 	}
 
 }
